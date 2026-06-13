@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">SmoothActions Settings</h1>
+
+    <div class="setting">
+      <label>Default Scroll Speed</label>
+      <select id="scrollSpeed">
+        <option value="slow">Slow</option>
+        <option value="medium">Medium</option>
+        <option value="fast">Fast</option>
+      </select>
+    </div>
+
+    <div class="setting">
+      <label>Enable Tap‑Speed Control</label>
+      <input type="checkbox" id="tapControl">
+    </div>
+
+    <div class="setting">
+      <label>Download Images as ZIP (future)</label>
+      <input type="checkbox" id="zipImages" disabled>
+    </div>
+
+    <button id="saveBtn" class="save-btn">Save Settings</button>
+    <p id="status" class="status"></p>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

@@ -1,30 +1,33 @@
+html,
 body {
   margin: 0;
   padding: 0;
   width: 320px;
   min-height: 100vh;
   font-family: "Inter", sans-serif;
-  background: radial-gradient(circle at top left, rgba(141, 206, 255, 0.18), transparent 30%),
-              radial-gradient(circle at bottom right, rgba(255, 201, 255, 0.16), transparent 25%),
-              linear-gradient(180deg, #0e1220 0%, #161b2c 100%);
+  background: linear-gradient(180deg, rgba(12, 15, 28, 0.96), rgba(18, 23, 40, 0.96));
   color: #f5f7fb;
+}
+
+body {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .container {
+  position: relative;
   width: calc(100% - 32px);
-  max-width: 300px;
+  max-width: 320px;
   margin: 24px auto;
   padding: 20px;
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
-  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(34px);
+  -webkit-backdrop-filter: blur(34px);
+  overflow: visible;
 }
 
 .container::before {
@@ -32,10 +35,10 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 25%),
-              radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.08), transparent 20%);
-  opacity: 0.6;
-  filter: blur(12px);
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 26%),
+              radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.04), transparent 18%);
+  opacity: 0.35;
+  filter: blur(10px);
 }
 
 .title {
@@ -60,6 +63,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 72vh;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .action-btn {

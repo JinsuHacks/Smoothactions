@@ -93,30 +93,226 @@ function getImageExtension(url) {
   }
 };
 
-// 3. Auto scroll
- document.getElementById("autoScroll").onclick = async () => {
+async function getPageText(tabId) {
+  const results = await executeScript(tabId, {
+    func: () => {
+      const raw = document.body?.innerText || "";
+      return raw.trim().replace(/\s{2,}/g, " ");
+    }
+  });
+  return results?.[0]?.result || "";
+}
+
+async function getPageLinks(tabId) {
+  const results = await executeScript(tabId, {
+    func: () => {
+      const links = Array.from(document.querySelectorAll("a[href]"))
+        .map((link) => link.href.trim())
+        .filter((href) => href && href !== "#" && !href.startsWith("javascript:"));
+      return Array.from(new Set(links));
+    }
+  });
+  return results?.[0]?.result || [];
+}
+
+document.getElementById("copyText").onclick = async () => {
   try {
+    const tab = await getActiveTab();
+    const text = await getPageText(tab.id);
+    if (!text) {
+      return alert("No visible text found on this page.");
+    }
+    await copyText(text, "Visible page text copied!");
+  } catch (error) {
+    console.error(error);
+    alert("Failed to copy visible text.");
+  }
+};
+
+document.getElementById("extractLinks").onclick = async () => {
+  try {
+    const tab = await getActiveTab();
+    const links = await getPageLinks(tab.id);
+    if (!links.length) {
+      return alert("No links were found on this page.");
+    }
+    await copyText(links.join("\n"), `Copied ${links.length} links to clipboard!`);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to extract links.");
+  }
+};
+
+document.getElementById("focusMode").onclick = async () => {
+  try {
+    const tab = await getActiveTab();
+    const results = await executeScript(tab.id, {
+      func: () => {
+        const styleId = "__smooth_focus_style";
+        const active = !!document.getElementById(styleId);
+        if (active) {
+          document.getElementById(styleId).remove();
+          document.documentElement.classList.remove("smooth-focus");
+          return false;
+        }
+
+        const style = document.createElement("style");
+        style.id = styleId;
+        style.textContent = `
+          html.smooth-focus body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 12, 32, 0.64);
+            pointer-events: none;
+            z-index: 2147483647;
+            backdrop-filter: blur(8px);
+          }
+          html.smooth-focus body > * {
+            filter: brightness(0.85) saturate(0.92) blur(0.8px);
+          }
+          html.smooth-focus body > #__smooth_focus_hud {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 2147483648;
+            padding: 10px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #eff4ff;
+            font-size: 12px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.18);
+          }
+        `;
+        document.head.appendChild(style);
+
+        const hud = document.createElement("div");
+        hud.id = "__smooth_focus_hud";
+        hud.innerText = "Focus mode enabled — click again to exit.";
+        document.body.appendChild(hud);
+
+        document.documentElement.classList.add("smooth-focus");
+        return true;
+      }
+    });
+
+    alert(results?.[0]?.result ? "Focus mode enabled." : "Focus mode disabled.");
+  } catch (error) {
+    console.error(error);
+    alert("Failed to toggle focus mode.");
+  }
+};
+
+document.getElementById("readAloud").onclick = async () => {
+  try {
+    const tab = await getActiveTab();
+    const results = await executeScript(tab.id, {
+      func: () => {
+        const title = document.title || "This page";
+        const paragraphs = Array.from(document.querySelectorAll("p"))
+          .slice(0, 4)
+          .map((p) => p.innerText.trim())
+          .filter(Boolean);
+        const text = [title, ...paragraphs].join(". ");
+
+        if (!window.speechSynthesis) {
+          return { success: false, message: "Speech synthesis is not supported." };
+        }
+
+        if (window.__smoothSpeechUtterance) {
+          window.speechSynthesis.cancel();
+          window.__smoothSpeechUtterance = null;
+        }
+
+        if (!text) {
+          return { success: false, message: "No readable text found." };
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.05;
+        utterance.pitch = 1.05;
+        window.__smoothSpeechUtterance = utterance;
+        window.speechSynthesis.speak(utterance);
+
+        return { success: true };
+      }
+    });
+
+    if (!results?.[0]?.result?.success) {
+      return alert(results?.[0]?.result?.message || "Unable to read page aloud.");
+    }
+
+    alert("Reading page aloud...");
+  } catch (error) {
+    console.error(error);
+    alert("Failed to read the page aloud.");
+  }
+};
+
+// 3. Auto scroll
+// --- Auto Scroll with Tap-Based Speed Control ---
+let scrollClicks = 0;
+let scrollTimeout = null;
+
+document.getElementById("autoScroll").onclick = async () => {
+  scrollClicks++;
+
+  // Reset click count if user pauses
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    scrollClicks = 0;
+  }, 400);
+
+  // 4 clicks = STOP scrolling
+  if (scrollClicks >= 4) {
     const tab = await getActiveTab();
     await executeScript(tab.id, {
       func: () => {
-        const duration = 15000;
-        const startTime = Date.now();
-        const step = () => {
-          window.scrollBy({ top: 6, left: 0, behavior: "smooth" });
-          const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
-          if (atBottom || Date.now() - startTime >= duration) {
-            return;
-          }
-          window.requestAnimationFrame(step);
-        };
-        step();
+        if (window.__smoothScrollInterval) {
+          cancelAnimationFrame(window.__smoothScrollInterval);
+          window.__smoothScrollInterval = null;
+        }
       }
+    });
+    alert("Scrolling stopped.");
+    scrollClicks = 0;
+    return;
+  }
+
+  // Determine speed
+  const speedMap = {
+    1: 2,   // slow
+    2: 6,   // medium
+    3: 12   // fast
+  };
+
+  const speed = speedMap[scrollClicks];
+
+  try {
+    const tab = await getActiveTab();
+    await executeScript(tab.id, {
+      func: (speed) => {
+        // Stop previous scroll loop if running
+        if (window.__smoothScrollInterval) {
+          cancelAnimationFrame(window.__smoothScrollInterval);
+        }
+
+        const step = () => {
+          window.scrollBy({ top: speed, left: 0 });
+          window.__smoothScrollInterval = requestAnimationFrame(step);
+        };
+
+        step();
+      },
+      args: [speed]
     });
   } catch (error) {
     console.error(error);
     alert("Auto scroll failed.");
   }
 };
+
 
 // 4. Download all images
  document.getElementById("downloadImages").onclick = async () => {
