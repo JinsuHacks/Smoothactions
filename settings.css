@@ -1,55 +1,93 @@
+html,
 body {
   margin: 0;
   padding: 0;
+  min-height: 100vh;
   font-family: "Inter", sans-serif;
-  background: linear-gradient(135deg, #1e1e2f, #2a2a40);
-  color: white;
+  background: radial-gradient(circle at top left, #141526, #0b101d 45%, #090d18);
+  color: #eef2ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .container {
-  padding: 20px;
-  backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  width: 280px;
-  margin: 20px auto;
-  box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+  width: min(360px, calc(100% - 32px));
+  padding: 28px 24px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 22px 66px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .title {
+  margin: 0 0 18px;
+  font-size: 26px;
+  font-weight: 800;
   text-align: center;
-  font-size: 22px;
-  margin-bottom: 20px;
-  background: linear-gradient(90deg, #7dd3fc, #c084fc);
+  letter-spacing: -0.04em;
+  background: linear-gradient(90deg, #79c0ff, #c792ea);
   -webkit-background-clip: text;
   color: transparent;
 }
 
 .setting {
-  margin-bottom: 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.setting label {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+select,
+input[type="checkbox"] {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fbff;
+  outline: none;
+}
+
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #82c7ff;
 }
 
 .save-btn {
   width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  padding: 14px;
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(125, 211, 252, 0.18), rgba(192, 132, 252, 0.16));
+  color: #f8fbff;
+  font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .save-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 0 12px rgba(125, 211, 252, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(125, 211, 252, 0.18);
 }
 
 .status {
+  margin-top: 14px;
   text-align: center;
-  margin-top: 10px;
-  opacity: 0.7;
+  color: #d0e8ff;
+  opacity: 0.88;
+  transition: opacity 0.25s ease;
+}
+
+.status.visible {
+  opacity: 1;
 }

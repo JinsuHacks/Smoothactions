@@ -120,11 +120,14 @@ body {
   color: rgba(245, 247, 251, 0.8);
 }
 
-.footer a {
+.footer a,
+.footer-link {
+  color: rgba(245, 247, 251, 0.8);
   text-decoration: none;
   font-weight: 600;
 }
 
-.footer a:hover {
+.footer a:hover,
+.footer-link:hover {
   text-decoration: underline;
 }

@@ -254,59 +254,91 @@ document.getElementById("readAloud").onclick = async () => {
 // --- Auto Scroll with Tap-Based Speed Control ---
 let scrollClicks = 0;
 let scrollTimeout = null;
+let scrollActive = false;
+
+function getAutoScrollSettings() {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(["scrollSpeed", "tapControl"], (data) => {
+      resolve({
+        scrollSpeed: data.scrollSpeed || "medium",
+        tapControl: data.tapControl ?? true
+      });
+    });
+  });
+}
+
+async function stopAutoScroll(tabId) {
+  await executeScript(tabId, {
+    func: () => {
+      if (window.__smoothScrollInterval) {
+        cancelAnimationFrame(window.__smoothScrollInterval);
+        window.__smoothScrollInterval = null;
+      }
+    }
+  });
+}
+
+async function runAutoScroll(tabId, speed) {
+  await executeScript(tabId, {
+    func: (speed) => {
+      if (window.__smoothScrollInterval) {
+        cancelAnimationFrame(window.__smoothScrollInterval);
+      }
+
+      const step = () => {
+        window.scrollBy({ top: speed, left: 0 });
+        window.__smoothScrollInterval = requestAnimationFrame(step);
+      };
+
+      step();
+    },
+    args: [speed]
+  });
+}
 
 document.getElementById("autoScroll").onclick = async () => {
-  scrollClicks++;
-
-  // Reset click count if user pauses
-  clearTimeout(scrollTimeout);
-  scrollTimeout = setTimeout(() => {
-    scrollClicks = 0;
-  }, 400);
-
-  // 4 clicks = STOP scrolling
-  if (scrollClicks >= 4) {
-    const tab = await getActiveTab();
-    await executeScript(tab.id, {
-      func: () => {
-        if (window.__smoothScrollInterval) {
-          cancelAnimationFrame(window.__smoothScrollInterval);
-          window.__smoothScrollInterval = null;
-        }
-      }
-    });
-    alert("Scrolling stopped.");
-    scrollClicks = 0;
-    return;
-  }
-
-  // Determine speed
-  const speedMap = {
-    1: 2,   // slow
-    2: 6,   // medium
-    3: 12   // fast
-  };
-
-  const speed = speedMap[scrollClicks];
-
   try {
     const tab = await getActiveTab();
-    await executeScript(tab.id, {
-      func: (speed) => {
-        // Stop previous scroll loop if running
-        if (window.__smoothScrollInterval) {
-          cancelAnimationFrame(window.__smoothScrollInterval);
-        }
+    const settings = await getAutoScrollSettings();
+    const speedValue = { slow: 2, medium: 6, fast: 12 };
 
-        const step = () => {
-          window.scrollBy({ top: speed, left: 0 });
-          window.__smoothScrollInterval = requestAnimationFrame(step);
-        };
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      scrollClicks = 0;
+    }, 400);
 
-        step();
-      },
-      args: [speed]
-    });
+    if (!settings.tapControl) {
+      if (scrollActive) {
+        await stopAutoScroll(tab.id);
+        alert("Scrolling stopped.");
+        scrollActive = false;
+        scrollClicks = 0;
+        return;
+      }
+
+      await runAutoScroll(tab.id, speedValue[settings.scrollSpeed]);
+      scrollActive = true;
+      alert(`Auto scroll started at ${settings.scrollSpeed} speed.`);
+      return;
+    }
+
+    scrollClicks += 1;
+
+    if (scrollClicks >= 4) {
+      await stopAutoScroll(tab.id);
+      alert("Scrolling stopped.");
+      scrollActive = false;
+      scrollClicks = 0;
+      return;
+    }
+
+    const speedLabels = ["slow", "medium", "fast"];
+    const speedLabel = speedLabels[scrollClicks - 1] || settings.scrollSpeed;
+    const speed = speedValue[speedLabel];
+
+    await runAutoScroll(tab.id, speed);
+    scrollActive = true;
+    alert(`Auto scroll started at ${speedLabel} speed.`);
   } catch (error) {
     console.error(error);
     alert("Auto scroll failed.");
