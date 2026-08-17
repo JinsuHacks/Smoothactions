@@ -65,4 +65,4 @@ The extension requires the following permissions:
 
 ## License
 
-This project is provided as-is. Update the license section as needed.
+the license is the lisence to do whatevea i want lols
